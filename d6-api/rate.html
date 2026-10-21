@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>환율 계산기</title>
+<script>
+  // ===== 🔌 이 화면이 쓰는 API (주소는 여기 한 곳에만) =====
+  // base= 뒤에 고른 통화(USD, JPY, EUR, CNY)가 들어가요. symbols=KRW 는 "원화로 알려 줘"라는 뜻이에요.
+  const API = {
+    rate: (from) => `https://api.frankfurter.dev/v1/latest?base=${from}&symbols=KRW`, // 🔌 Frankfurter 환율 API (키 필요 없음)
+  };
+</script>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --text: #1d232a;
+    --muted: #66717d;
+    --line: #dde2e7;
+    --accent: #2f6fdf;
+    --error-bg: #fdecec;
+    --error-text: #a52a2a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14181d;
+      --card: #1e242b;
+      --text: #e8ecf0;
+      --muted: #9aa5b1;
+      --line: #313a44;
+      --accent: #7fa8f0;
+      --error-bg: #3a2020;
+      --error-text: #f3a6a6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 40px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.5;
+  }
+  main { max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; margin: 0 0 20px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .inputs { display: flex; gap: 8px; }
+  .inputs label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+  .inputs .amount { flex: 1; }
+  input, select {
+    width: 100%;
+    font: inherit;
+    font-size: 1.1rem;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #result { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .won { font-size: 2rem; font-weight: 700; line-height: 1.2; word-break: break-all; }
+  .unit-rate { color: var(--muted); margin-top: 4px; }
+  .basis { color: var(--muted); font-size: 0.85rem; margin-top: 12px; }
+  .loading { color: var(--muted); margin: 0; }
+  .error {
+    background: var(--error-bg);
+    color: var(--error-text);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .error button {
+    margin-top: 10px;
+    padding: 6px 14px;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  .source { color: var(--muted); font-size: 0.85rem; margin: 16px 0 0; }
+  .source a { color: var(--accent); }
+  .api-box {
+    margin-top: 28px;
+    padding: 16px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    font-size: 0.85rem;
+  }
+  .api-box h2 { font-size: 0.95rem; margin: 0 0 8px; }
+  .api-box code {
+    display: block;
+    word-break: break-all;
+    background: var(--bg);
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  .api-box a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>환율 계산기</h1>
+
+  <section class="card">
+    <div class="inputs">
+      <div class="amount">
+        <label for="amount">금액</label>
+        <input id="amount" type="number" inputmode="decimal" min="0" step="any" value="100">
+      </div>
+      <div>
+        <label for="currency">통화</label>
+        <select id="currency">
+          <option value="USD">🇺🇸 USD 달러</option>
+          <option value="JPY">🇯🇵 JPY 엔</option>
+          <option value="EUR">🇪🇺 EUR 유로</option>
+          <option value="CNY">🇨🇳 CNY 위안</option>
+        </select>
+      </div>
+    </div>
+    <div id="result">
+      <p class="loading">환율을 불러오는 중이에요…</p>
+    </div>
+  </section>
+
+  <p class="source">
+    환율 데이터: <a href="https://frankfurter.dev/" target="_blank" rel="noopener">Frankfurter</a>
+    · 유럽중앙은행(ECB)이 영업일마다 하루 한 번 발표하는 기준 환율이에요. 은행에서 실제로 바꿀 때의 금액과는 달라요.
+  </p>
+
+  <section class="api-box">
+    <h2>🔌 이 화면이 쓰는 API</h2>
+    <code id="api-url"></code>
+    <a id="api-link" target="_blank" rel="noopener">새 탭에서 원본 JSON 보기 ↗</a>
+  </section>
+</main>
+
+<script>
+  const NAMES = { USD: "달러", JPY: "엔", EUR: "유로", CNY: "위안" };
+
+  const amountInput = document.getElementById("amount");
+  const currencySelect = document.getElementById("currency");
+  const result = document.getElementById("result");
+
+  // 마지막으로 받은 환율 (금액만 바꿀 때는 API를 다시 부르지 않아요)
+  let current = null; // { from, rate, date }
+  let requestId = 0;
+
+  const won = (n) => n.toLocaleString("ko-KR", { maximumFractionDigits: 0 });
+
+  function render() {
+    if (!current) return;
+    const amount = Number(amountInput.value);
+    if (amountInput.value === "" || !Number.isFinite(amount) || amount < 0) {
+      result.innerHTML = `<p class="loading">0 이상의 금액을 넣어 주세요.</p>`;
+      return;
+    }
+    const { from, rate, date } = current;
+    result.innerHTML = `
+      <div class="won">${won(amount * rate)}원</div>
+      <div class="unit-rate">${amount.toLocaleString("ko-KR")} ${from} → 원화 · 1 ${from} = ${rate.toLocaleString("ko-KR", { maximumFractionDigits: 4 })}원</div>
+      <p class="basis">기준일: ${date} (ECB 기준 환율)</p>
+    `;
+  }
+
+  async function loadRate() {
+    const from = currencySelect.value;
+    const url = API.rate(from);
+    const myId = ++requestId;
+    document.getElementById("api-url").textContent = url;
+    document.getElementById("api-link").href = url;
+    current = null;
+    result.innerHTML = `<p class="loading">${NAMES[from]} 환율을 불러오는 중이에요…</p>`;
+    try {
+      const res = await fetch(url); // 🔌 API 호출
+      if (!res.ok) throw new Error(`서버 응답 ${res.status}`);
+      const data = await res.json();
+      const rate = data.rates && data.rates.KRW;
+      if (typeof rate !== "number") throw new Error("응답에 원화(KRW) 환율이 없어요");
+      if (myId !== requestId) return; // 그 사이 다른 통화를 골랐으면 무시
+      current = { from, rate, date: data.date };
+      render();
+    } catch (err) {
+      if (myId !== requestId) return;
+      result.innerHTML = `
+        <div class="error">
+          <strong>환율을 불러오지 못했어요.</strong><br>
+          잠시 뒤 다시 시도하거나, 맨 위 🔌 주소가 맞는지 확인해 주세요.<br>
+          <small>(${err.message})</small><br>
+          <button type="button" onclick="loadRate()">다시 시도</button>
+        </div>
+      `;
+    }
+  }
+
+  amountInput.addEventListener("input", render);
+  currencySelect.addEventListener("change", loadRate);
+  loadRate();
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>API 주문 시뮬레이터</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--ink:#14213D;--ink2:#3D4A63;--mute:#6B7487;--line:#DCE1EA;--paper:#FFFFFF;--wash:#F2F4F8;
+--am:#2563EB;--am-bg:#EAF1FE;--pm:#0E8F6E;--pm-bg:#E5F5EF;--mark:#FFE45C;--warn:#B45309;--bad:#C0392B;
+--c-base:#7E22CE;--c-end:#C2410C;--c-par:#0E8F6E;}
+@media (prefers-color-scheme:dark){:root{--ink:#E8ECF4;--ink2:#C3CAD8;--mute:#98A1B3;--line:#2E3648;--paper:#11161F;--wash:#182030;
+--am-bg:#16233F;--pm-bg:#11302A;--mark:#7A6A12;--c-base:#C4A1F5;--c-end:#F5A26B;--c-par:#5CD6AE;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.7 Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;word-break:keep-all}
+.wrap{max-width:820px;margin:0 auto;padding:0 20px}
+.hero{background:#14213D;color:#fff;padding:28px 0 22px}
+.hero h1{margin:0 0 4px;font-size:26px;letter-spacing:-.5px}
+.hero p{margin:0;opacity:.85}
+.hero .one{display:inline-block;margin-top:12px;background:var(--mark);color:#14213D;font-weight:800;padding:4px 12px;border-radius:8px}
+.sec{padding:26px 0 14px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:20px;margin:0 0 10px}
+.sec h2 .n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:15px;margin-right:8px}
+.hint{color:var(--mute);font-size:14px;margin:0 0 12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:20px;padding:6px 16px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.opts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0}
+.opts label{font-size:14px;color:var(--ink2)}
+select,input[type=text]{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.url{font:14px/1.6 "D2Coding",ui-monospace,Consolas,monospace;background:var(--wash);border-radius:10px;padding:12px 14px;word-break:break-all}
+.url .b{color:var(--c-base);font-weight:700}.url .e{color:var(--c-end);font-weight:700}.url .p{color:var(--c-par);font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-top:8px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.legend .lb::before{background:var(--c-base)}.legend .le::before{background:var(--c-end)}.legend .lp::before{background:var(--c-par)}
+.btn{font:inherit;font-weight:700;border:0;background:var(--am);color:#fff;border-radius:10px;padding:10px 18px;cursor:pointer}
+.btn.ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:14px;margin:10px 0}
+.status.ok{color:var(--pm)}.status.fb{color:var(--warn)}
+.json{font:14px/1.75 "D2Coding",ui-monospace,Consolas,monospace;background:var(--wash);border-radius:10px;padding:14px;overflow-x:auto;white-space:pre}
+.json .k{color:var(--c-end)}
+.json .v{cursor:pointer;border-radius:4px;padding:0 2px;color:var(--c-par);font-weight:700}
+.json .v:hover,.json .v:focus-visible{background:var(--mark);color:#14213D;outline:none}
+.json .v.sel{background:var(--mark);color:#14213D}
+.pick{margin-top:12px;background:var(--pm-bg);border-radius:10px;padding:12px 14px;min-height:52px}
+.pick code{font:15px "D2Coding",ui-monospace,Consolas,monospace;font-weight:700}
+.boxes{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:14px}
+.boxes span{border:2px solid var(--ink2);border-radius:6px;padding:1px 8px}
+.boxes i{font-style:normal;color:var(--mute)}
+.quiz li{margin:14px 0}
+.quiz .q{font-weight:700}
+.quiz .ans{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.quiz input{min-width:240px;font-family:"D2Coding",ui-monospace,Consolas,monospace}
+.res{font-size:14px;margin-top:4px}.res.ok{color:var(--pm)}.res.no{color:var(--bad)}
+.score{font-weight:800;font-size:18px}
+.mini{font:13px/1.6 "D2Coding",ui-monospace,Consolas,monospace;background:var(--wash);border-radius:8px;padding:8px 12px;white-space:pre;overflow-x:auto}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--am);outline-offset:2px}
+footer{padding:22px 0 40px;color:var(--mute);font-size:13px}
+</style></head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>🔌 API 주문 시뮬레이터</h1>
+  <p>주소를 바꿔서 주문하고 → 배달 온 JSON에서 → 원하는 값을 꺼내 보세요.</p>
+  <span class="one">API = 주소로 주문하면 데이터가 배달된다</span>
+</div></header>
+
+<main class="wrap">
+<section class="sec">
+  <h2><span class="n">1</span>어느 창구에 주문할까요?</h2>
+  <p class="hint">오늘 고른 창구는 모두 <b>회원 카드(API 키) 없이</b> 주문돼요.</p>
+  <div class="tabs" role="tablist" id="apiTabs"></div>
+</section>
+
+<section class="sec">
+  <h2><span class="n">2</span>주문 옵션 고르기 → 주소가 바뀌어요</h2>
+  <div class="opts" id="opts"></div>
+  <div class="url" id="url" aria-live="polite"></div>
+  <div class="legend"><span class="lb">기본 주소</span><span class="le">메뉴(엔드포인트)</span><span class="lp">옵션(파라미터)</span></div>
+</section>
+
+<section class="sec">
+  <h2><span class="n">3</span>주문 보내기</h2>
+  <div class="row">
+    <button class="btn" id="send" type="button">주문 보내기 (fetch)</button>
+    <button class="btn ghost" id="sample" type="button">예시 응답으로 보기</button>
+    <a id="open" target="_blank" rel="noopener" style="font-size:14px">↗ 새 탭에서 원본 열기</a>
+  </div>
+  <p class="status" id="status">아직 주문하지 않았어요.</p>
+</section>
+
+<section class="sec">
+  <h2><span class="n">4</span>배달 온 JSON — 값을 눌러 보세요</h2>
+  <p class="hint">초록색 값을 누르면, 그 값을 꺼내는 <b>길</b>이 아래에 나와요. <b>{ } = 상자, [ ] = 번호 줄, 점(.) = 상자 열기</b></p>
+  <div class="json" id="json">(주문하면 여기에 나와요)</div>
+  <div class="pick" id="pick">값을 하나 눌러 보세요.</div>
+</section>
+
+<section class="sec">
+  <h2><span class="n">5</span>꺼내기 퀴즈</h2>
+  <p class="hint">아래 고정된 예시 응답을 보고 길을 적어요. 객체로 시작하면 <code>data</code>, 목록으로 시작하면 <code>list</code>로 시작해요.</p>
+  <ol class="quiz" id="quiz"></ol>
+  <p class="score" id="score"></p>
+</section>
+</main>
+<footer class="wrap">Weather data by Open-Meteo.com · 환율: Frankfurter · 공휴일: Nager.Date · 사진: Dog CEO · 예시 응답은 구조를 보여 주기 위한 값이에요.</footer>
+
+<script>
+const CITIES={"서울":[37.5665,126.978],"부산":[35.1017,129.03],"제주":[33.4996,126.5312],"도쿄":[35.6762,139.6503],"뉴욕":[40.7128,-74.006]};
+const APIS={
+  weather:{label:"☀️ 날씨",base:"https://api.open-meteo.com",end:"/v1/forecast",
+    opts:[{id:"city",label:"도시",type:"select",values:Object.keys(CITIES)},
+          {id:"vars",label:"받을 값",type:"select",values:["temperature_2m,weather_code","temperature_2m,wind_speed_10m","temperature_2m,relative_humidity_2m"]}],
+    params:o=>{const [la,lo]=CITIES[o.city];return [["latitude",la],["longitude",lo],["current",o.vars],["timezone","auto"]]},
+    sample:{latitude:37.55,longitude:127.0,timezone:"Asia/Seoul",current:{time:"2026-10-21T10:00",temperature_2m:16.4,weather_code:2}}},
+  rate:{label:"💱 환율",base:"https://api.frankfurter.dev",end:"/v1/latest",
+    opts:[{id:"base",label:"바꿀 돈",type:"select",values:["USD","JPY","EUR","CNY","GBP"]}],
+    params:o=>[["base",o.base],["symbols","KRW"]],
+    note:"예시 응답은 USD 기준이에요.",
+    sample:{amount:1.0,base:"USD",date:"2026-10-19",rates:{KRW:1329.49}}},
+  holiday:{label:"🎉 공휴일",base:"https://date.nager.at",end:o=>"/api/v3/NextPublicHolidays/"+o.cc,
+    opts:[{id:"cc",label:"나라",type:"select",values:["KR","JP","US","DE"]}],
+    params:o=>[],
+    sample:[{date:"2026-12-25",localName:"기독탄신일",name:"Christmas Day"},{date:"2027-01-01",localName:"새해",name:"New Year's Day"}]},
+  dog:{label:"🐶 강아지",base:"https://dog.ceo",end:"/api/breeds/image/random",opts:[],params:o=>[],
+    sample:{message:"https://images.dog.ceo/breeds/setter-irish/n02100877_8900.jpg",status:"success"}}
+};
+let cur="weather", state={};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function buildTabs(){
+  $("apiTabs").innerHTML=Object.entries(APIS).map(([k,a])=>`<button type="button" role="tab" data-k="${k}" aria-selected="${k===cur}">${a.label}</button>`).join("");
+  $("apiTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;state={};buildTabs();buildOpts();});
+}
+function buildOpts(){
+  const a=APIS[cur];
+  if(!a.opts.length){$("opts").innerHTML='<span class="hint" style="margin:0">이 창구는 옵션 없이 주문해요. 부를 때마다 답이 달라요(랜덤).</span>';}
+  else{$("opts").innerHTML=a.opts.map(o=>`<label>${o.label} <select data-id="${o.id}">${o.values.map(v=>`<option>${esc(v)}</option>`).join("")}</select></label>`).join("");
+    $("opts").querySelectorAll("select").forEach(s=>{state[s.dataset.id]=state[s.dataset.id]||s.value;s.value=state[s.dataset.id];s.onchange=()=>{state[s.dataset.id]=s.value;renderUrl();};});}
+  renderUrl();
+  $("json").textContent="(주문하면 여기에 나와요)";$("pick").textContent="값을 하나 눌러 보세요.";$("status").textContent="아직 주문하지 않았어요.";$("status").className="status";
+}
+function urlParts(){
+  const a=APIS[cur];const end=typeof a.end==="function"?a.end(state):a.end;const ps=a.params(state);
+  const q=ps.length?"?"+ps.map(([k,v])=>k+"="+encodeURIComponent(v).replace(/%2C/g,",")).join("&"):"";
+  return {base:a.base,end,q,full:a.base+end+q};
+}
+function renderUrl(){
+  const u=urlParts();
+  $("url").innerHTML=`<span class="b">${esc(u.base)}</span><span class="e">${esc(u.end)}</span><span class="p">${esc(u.q)}</span>`;
+  $("open").href=u.full;
+}
+function show(data,root){
+  function walk(v,path,ind){
+    const pad="  ".repeat(ind);
+    if(Array.isArray(v)){
+      if(!v.length)return "[]";
+      return "[\n"+v.map((x,i)=>pad+"  "+walk(x,`${path}[${i}]`,ind+1)).join(",\n")+"\n"+pad+"]";
+    }
+    if(v&&typeof v==="object"){
+      const ks=Object.keys(v);if(!ks.length)return "{}";
+      return "{\n"+ks.map(k=>{const p=/^[A-Za-z_$][\w$]*$/.test(k)?`${path}.${k}`:`${path}["${k}"]`;
+        return `${pad}  <span class="k">"${esc(k)}"</span>: ${walk(v[k],p,ind+1)}`}).join(",\n")+"\n"+pad+"}";
+    }
+    const txt=typeof v==="string"?`"${esc(v)}"`:esc(v);
+    return `<span class="v" tabindex="0" role="button" data-p="${esc(path)}" data-val="${esc(typeof v==="string"?v:JSON.stringify(v))}">${txt}</span>`;
+  }
+  $("json").innerHTML=walk(data,root,0);
+  $("json").querySelectorAll(".v").forEach(el=>{
+    const act=()=>{$("json").querySelectorAll(".v.sel").forEach(x=>x.classList.remove("sel"));el.classList.add("sel");
+      const p=el.dataset.p;const steps=p.replace(/\[(\d+)\]/g,".$1번").split(".").filter(Boolean);
+      $("pick").innerHTML=`꺼내는 길: <code>${esc(p)}</code> → 값 <b>${esc(el.dataset.val)}</b>
+        <div class="boxes">${steps.map((s,i)=>(i?'<i>→ 열기 →</i>':'')+`<span>${esc(s)}</span>`).join("")}</div>`;};
+    el.onclick=act;el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();act();}};
+  });
+}
+async function send(){
+  const u=urlParts();const a=APIS[cur];
+  $("status").className="status";$("status").textContent="주문 중… (fetch)";
+  try{
+    const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),7000);
+    const res=await fetch(u.full,{signal:ctl.signal,cache:"no-store"});clearTimeout(t);
+    if(!res.ok)throw new Error("응답 코드 "+res.status);
+    const data=await res.json();
+    $("status").className="status ok";$("status").textContent="✅ 진짜 응답이 배달됐어요! (방금 그 회사 서버가 보낸 데이터)";
+    show(data,Array.isArray(data)?"list":"data");
+  }catch(e){
+    $("status").className="status fb";$("status").textContent=`⚠️ 주문이 실패했어요 (${e.name==="AbortError"?"시간 초과":e.message}). 대신 예시 응답을 보여 줄게요. ${a.note||""} — 이게 바로 '실패 화면'이 필요한 이유예요.`;
+    show(a.sample,Array.isArray(a.sample)?"list":"data");
+  }
+}
+$("send").onclick=send;
+$("sample").onclick=()=>{const a=APIS[cur];$("status").className="status fb";$("status").textContent="예시 응답이에요 (진짜 주문 아님). "+(a.note||"");show(a.sample,Array.isArray(a.sample)?"list":"data");};
+
+/* ---------- 퀴즈 ---------- */
+const QUIZ=[
+  {q:"환율 응답에서 기준 날짜는?",src:{amount:1.0,base:"USD",date:"2026-10-19",rates:{KRW:1329.49}},a:["data.date"]},
+  {q:"같은 응답에서 원화 환율(1329.49)은?",src:null,a:["data.rates.KRW",'data.rates["KRW"]',"data['rates']['KRW']",'data["rates"]["KRW"]']},
+  {q:"날씨 응답에서 기온은?",src:{current:{temperature_2m:16.4,weather_code:2}},a:["data.current.temperature_2m"]},
+  {q:"공휴일 목록에서 첫 번째 공휴일의 한국어 이름은?",src:[{date:"2026-12-25",localName:"기독탄신일"},{date:"2027-01-01",localName:"새해"}],a:["list[0].localName"]},
+  {q:"같은 목록에서 두 번째 공휴일 날짜는?",src:null,a:["list[1].date"]}
+];
+let last=null;
+$("quiz").innerHTML=QUIZ.map((x,i)=>{if(x.src)last=x.src;
+  return `<li><div class="q">${esc(x.q)}</div>${x.src?`<div class="mini">${esc(JSON.stringify(x.src,null,2))}</div>`:'<div class="hint" style="margin:4px 0">↑ 바로 위 응답을 다시 봐요</div>'}
+  <div class="ans"><input type="text" data-i="${i}" placeholder="예: data.____" aria-label="${i+1}번 답" autocomplete="off" spellcheck="false"><button class="btn ghost" type="button" data-i="${i}">확인</button></div>
+  <div class="res" id="r${i}" aria-live="polite"></div></li>`}).join("");
+const done=new Set();
+function check(i){
+  const inp=$("quiz").querySelector(`input[data-i="${i}"]`);const v=inp.value.replace(/\s/g,"");
+  const ok=QUIZ[i].a.some(a=>a.replace(/\s/g,"")===v);const r=$("r"+i);
+  if(ok){r.className="res ok";r.textContent="정답! 상자를 순서대로 잘 열었어요.";done.add(i);}
+  else{r.className="res no";r.textContent=v.startsWith("data")||v.startsWith("list")?"아쉬워요. 바깥 상자부터 한 칸씩 점(.)으로 들어가 보세요. 목록은 [0]부터!":"data 또는 list로 시작해요.";done.delete(i);}
+  $("score").textContent=`맞힌 문제 ${done.size} / ${QUIZ.length}`+(done.size===QUIZ.length?" 🎉 이제 Claude에게 정확한 칸 이름으로 시킬 수 있어요!":"");
+}
+$("quiz").querySelectorAll("button").forEach(b=>b.onclick=()=>check(+b.dataset.i));
+$("quiz").querySelectorAll("input").forEach(inp=>inp.onkeydown=e=>{if(e.key==="Enter")check(+inp.dataset.i)});
+
+buildTabs();buildOpts();
+</script>
+</body></html>
